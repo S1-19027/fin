@@ -4,7 +4,6 @@ from django.shortcuts import render, HttpResponse, redirect
 # Create your views here.
 from django.contrib import auth
 from django.contrib.auth.models import User
-from auth_demo import models
 
 
 def login(request):

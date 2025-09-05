@@ -34,19 +34,9 @@ class Transaction(models.Model):
     )
     date = models.DateTimeField(verbose_name="交易时间")
     remark = models.TextField(blank=True, verbose_name="备注")
-
     # 外键关联
     category = models.ForeignKey(
         Category, on_delete=models.PROTECT, verbose_name="分类"
-    )
-    related_user = models.ForeignKey(
-        User,
-        on_delete=models.PROTECT,
-        related_name="related_transactions",
-        verbose_name="关联成员",
-    )
-    family = models.ForeignKey(
-        Family, on_delete=models.CASCADE, verbose_name="所属家庭"
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")

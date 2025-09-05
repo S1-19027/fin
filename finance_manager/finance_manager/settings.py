@@ -82,11 +82,12 @@ WSGI_APPLICATION = "finance_manager.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
+        "ENGINE": "django.db.backends.mysql",
         "NAME": "fin",
         "PORT": 3306,
         "USER": "chen",
         "PASSWORD": "csl25679",
+        'HOST': 'localhost',
         "QUERY": {"charset": "utf8mb4", "init_command": "SET NAMES 'utf8mb4'"},
     }
 }

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>交易记录</h2>
+<ul>
+    {% for tx in transactions %}
+    <li>{{ tx.id }} - {{ tx.amount }} - {{ tx.user.nickname }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

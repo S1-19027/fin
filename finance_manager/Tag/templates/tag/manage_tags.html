@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>我的标签</h2>
+<ul>
+    {% for tag in tags %}
+    <li>{{ tag.name }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

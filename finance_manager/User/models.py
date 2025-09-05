@@ -13,22 +13,19 @@ from Family.models import Family
 class CustomUserManager(BaseUserManager):
     """自定义用户管理器，用于创建用户和超级用户"""
 
-    def create_user(self, username, email, password=None, **extra_fields):
+    def create_user(self, username, password=None, **extra_fields):
         """
         创建并保存一个普通用户
         """
         if not username:
             raise ValueError("用户必须设置用户名")
-        if not email:
-            raise ValueError("用户必须设置邮箱地址")
 
-        email = self.normalize_email(email)
-        user = self.model(username=username, email=email, **extra_fields)
+        user = self.model(username=username,  **extra_fields)
         user.set_password(password)  # 加密密码
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, email, password=None, **extra_fields):
+    def create_superuser(self, username,password=None, **extra_fields):
         """
         创建并保存一个超级用户
         """
@@ -43,7 +40,7 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get("is_superuser") is not True:
             raise ValueError("超级用户必须设置 is_superuser=True")
 
-        return self.create_user(username, email, password, **extra_fields)
+        return self.create_user(username, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -64,7 +61,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name="用户名",
         help_text="用于登录系统的唯一标识",
     )
-    email = models.EmailField(verbose_name="邮箱地址", unique=True)
+    email = models.EmailField(blank=True,null=True,verbose_name="邮箱地址")
 
     # 个人信息
     nickname = models.CharField(
@@ -73,12 +70,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     avatar = models.ImageField(
         upload_to="avatars/", blank=True, null=True, verbose_name="头像"
     )
-    relationship = models.CharField(
-        max_length=50,
-        blank=True,
-        verbose_name="与户主关系",
-        help_text="如：本人、配偶、子女等",
-    )
+    # relationship = models.CharField(
+    #     max_length=50,
+    #     blank=True,
+    #     null=True,
+    #     verbose_name="与户主关系",
+    #     help_text="如：本人、配偶、子女等",
+    # )
 
     # 家庭与权限关系
     family = models.ForeignKey(
@@ -86,6 +84,8 @@ class User(AbstractBaseUser, PermissionsMixin):
         on_delete=models.CASCADE,
         verbose_name="所属家庭",
         related_name="members",
+        blank=True,
+        null=True,
     )
     role = models.CharField(
         max_length=10,
@@ -110,7 +110,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     # 指定认证字段和管理器
     USERNAME_FIELD = "username"  # 用作唯一标识的字段
     EMAIL_FIELD = "email"  # 邮箱字段
-    REQUIRED_FIELDS = ["email", "nickname"]  # 创建超级用户时需要输入的字段
+    
 
     objects = CustomUserManager()  # 使用自定义的管理器
 
