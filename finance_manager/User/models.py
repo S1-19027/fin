@@ -45,74 +45,35 @@ class CustomUserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """
-    自定义用户模型,替代Django内置的User模型
+    自定义用户模型，去除全局角色，仅保留基础信息
     """
-
-    # 角色选择 - 简化版
-    class Role(models.TextChoices):
-        ADMIN = "admin", "管理员"
-        MEMBER = "member", "普通用户"
-
-    # 基本信息
     user_id = models.AutoField(primary_key=True, verbose_name="用户ID")
     username = models.CharField(
         max_length=50,
         unique=True,
         verbose_name="用户名",
-        help_text="用于登录系统的唯一标识",
+        # help_text="用于登录系统的唯一标识",
     )
-    email = models.EmailField(blank=True,null=True,verbose_name="邮箱地址")
-
-    # 个人信息
+    email = models.EmailField(blank=True, null=True, verbose_name="邮箱地址")
     nickname = models.CharField(
-        max_length=100, verbose_name="昵称", help_text="在系统中显示的名称"
+        max_length=100, verbose_name="昵称", #help_text="在系统中显示的名称"
     )
     avatar = models.ImageField(
         upload_to="avatars/", blank=True, null=True, verbose_name="头像"
     )
-    # relationship = models.CharField(
-    #     max_length=50,
-    #     blank=True,
-    #     null=True,
-    #     verbose_name="与户主关系",
-    #     help_text="如：本人、配偶、子女等",
-    # )
-
-    # 家庭与权限关系
-    family = models.ForeignKey(
-        Family,
-        on_delete=models.CASCADE,
-        verbose_name="所属家庭",
-        related_name="members",
-        blank=True,
-        null=True,
-    )
-    role = models.CharField(
-        max_length=10,
-        choices=Role.choices,
-        default=Role.MEMBER,  # 新用户默认为普通用户
-        verbose_name="用户角色",
-    )
-
-    # 时间戳
     date_joined = models.DateTimeField(default=timezone.now, verbose_name="加入时间")
     last_login = models.DateTimeField(
         blank=True, null=True, verbose_name="最后登录时间"
     )
-
-    # Django认证系统必需字段
     is_active = models.BooleanField(default=True, verbose_name="激活状态")
     is_staff = models.BooleanField(
         default=False, verbose_name="管理员状态", help_text="是否可以登录管理后台"
     )
     is_superuser = models.BooleanField(default=False, verbose_name="超级用户状态")
 
-    # 指定认证字段和管理器
-    USERNAME_FIELD = "username"  # 用作唯一标识的字段
-    EMAIL_FIELD = "email"  # 邮箱字段
-    
-
-    objects = CustomUserManager()  # 使用自定义的管理器
+    USERNAME_FIELD = "username"
+    EMAIL_FIELD = "email"
+    objects = models.Manager()  # 使用默认管理器
 
     class Meta:
         db_table = "user"
@@ -121,7 +82,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         indexes = [
             models.Index(fields=["username"]),
             models.Index(fields=["email"]),
-            models.Index(fields=["family", "role"]),  # 联合索引，提高查询效率
+            # models.Index(fields=["family"]),  # 联合索引，提高查询效率
         ]
 
     def __str__(self):

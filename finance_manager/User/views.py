@@ -1,63 +1,68 @@
-
+# views.py
 from django.shortcuts import render, redirect
 from django.contrib import messages
-from django.contrib.auth import authenticate, login
-from django import forms
-from .models import User
+from django.contrib.auth import login as auth_login
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
+from .forms import LoginForm, RegisterForm
+from .services import AuthService, PermissionService
+from TransactionUsers.models import TransactionUsers
 
-# 登录表单
-class LoginForm(forms.Form):
-	username = forms.CharField(label='用户名', max_length=50)
-	password = forms.CharField(label='密码', widget=forms.PasswordInput)
-
-# 注册表单
-class RegisterForm(forms.ModelForm):
-	password = forms.CharField(label='密码', widget=forms.PasswordInput)
-	password2 = forms.CharField(label='确认密码', widget=forms.PasswordInput)
-	role = forms.ChoiceField(label='角色', choices=User.Role.choices)
-    
-
-	class Meta:
-		model = User
-		fields = ['username', 'email', 'nickname', 'password', 'role']
-
-	def clean(self):
-		cleaned_data = super().clean()
-		password = cleaned_data.get('password')
-		password2 = cleaned_data.get('password2')
-		if password and password2 and password != password2:
-			raise forms.ValidationError('两次输入的密码不一致')
-		return cleaned_data
-
-# 注册视图
+@require_http_methods(["GET", "POST"])
 def register(request):
-	if request.method == 'POST':
-		form = RegisterForm(request.POST)
-		if form.is_valid():
-			user = form.save(commit=False)
-			user.set_password(form.cleaned_data['password'])
-			user.role = form.cleaned_data['role']
-			user.save()
-			messages.success(request, '注册成功，请登录！')
-			return redirect('login')
-	else:
-		form = RegisterForm()
-	return render(request, 'register.html', {'form': form})
+    """注册视图"""
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            try:
+                user = AuthService.create_user(
+                    username=form.cleaned_data['username'],
+                    nickname=form.cleaned_data['nickname'],
+                    password=form.cleaned_data['password']
+                )
+                messages.success(request, '注册成功，请登录！')
+                return redirect('login')
+            except Exception as e:
+                messages.error(request, f'注册失败: {str(e)}')
+    else:
+        form = RegisterForm()
+    
+    return render(request, 'register.html', {'form': form})
 
-# 登录视图
-def user_login(request):
-	if request.method == 'POST':
-		form = LoginForm(request.POST)
-		if form.is_valid():
-			username = form.cleaned_data['username']
-			password = form.cleaned_data['password']
-			user = authenticate(request, username=username, password=password)
-			if user is not None:
-				login(request, user)
-				messages.success(request, '登录成功！')
-				return redirect('/')  # 登录后跳转主页，可自定义
-			else:
-				messages.error(request, '用户名或密码错误')
-	else:
-		form = LoginForm()
-	return render(request, 'login.html', {'form': form})
+@require_http_methods(["GET", "POST"])
+def login(request):
+    """登录视图"""
+    if request.method == 'POST':
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            user = AuthService.authenticate_user(
+                username=form.cleaned_data['username'],
+                password=form.cleaned_data['password']
+            )
+            if user is not None:
+                auth_login(request, user)
+                messages.success(request, '登录成功！')
+                return redirect('/home')
+            else:
+                messages.error(request, '用户名或密码错误')
+    else:
+        form = LoginForm()
+    
+    return render(request, 'login.html', {'form': form})
+
+@login_required
+def transaction_detail(request, transaction_id):
+    """交易详情视图 - 使用权限检查"""
+    try:
+        transaction = TransactionUsers.objects.get(transaction_id=transaction_id)
+        
+        # 使用服务层的权限检查
+        if not PermissionService.check_transaction_ownership(request.user, transaction):
+            messages.error(request, '没有权限查看此交易记录')
+            return redirect('transaction_list')
+        
+        return render(request, 'transaction_detail.html', {'transaction': transaction})
+        
+    except TransactionUsers.DoesNotExist:
+        messages.error(request, '交易记录不存在')
+        return redirect('transaction_list')

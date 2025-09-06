@@ -41,9 +41,12 @@ INSTALLED_APPS = [
     "User",
     "Family",
     "Transaction",
-    "TransactionTag",
     "Category",
     "Tag",
+    "FamilyMembers",
+    "TransactionUsers",
+    "OperationLog",
+    
 ]
 
 MIDDLEWARE = [

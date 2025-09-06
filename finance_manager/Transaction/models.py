@@ -23,6 +23,7 @@ class Transaction(models.Model):
     amount = models.DecimalField(
         max_digits=12,
         decimal_places=2,
+        null=False,
         validators=[MinValueValidator(0.01)],
         verbose_name="金额",
     )
@@ -33,10 +34,10 @@ class Transaction(models.Model):
         max_length=20, choices=PAYMENT_METHOD_CHOICES, verbose_name="支付方式"
     )
     date = models.DateTimeField(verbose_name="交易时间")
-    remark = models.TextField(blank=True, verbose_name="备注")
+    remark = models.TextField(blank=True, null=True,verbose_name="备注")
     # 外键关联
     category = models.ForeignKey(
-        Category, on_delete=models.PROTECT, verbose_name="分类"
+        Category, on_delete=models.RESTRICT, db_column='category_id', verbose_name="分类"
     )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="创建时间")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="更新时间")
@@ -47,7 +48,7 @@ class Transaction(models.Model):
         verbose_name_plural = verbose_name
         indexes = [
             models.Index(fields=["date"]),
-            models.Index(fields=["family", "type"]),
+            models.Index(fields=["category"]),
         ]
 
     def __str__(self):

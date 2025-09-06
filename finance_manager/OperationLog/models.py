@@ -1,5 +1,5 @@
 from django.db import models
-
+from User.models import User
 # Create your models here.
 class OperationLog(models.Model):
     """操作日志模型"""
